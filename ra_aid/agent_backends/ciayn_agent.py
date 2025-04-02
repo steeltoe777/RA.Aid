@@ -123,11 +123,11 @@ class CiaynAgent:
     BUNDLEABLE_TOOLS = [
         "emit_expert_context",
         "ask_expert",
-        "emit_key_facts",
-        "emit_key_snippet",
+        # "emit_key_facts",
+        # "emit_key_snippet",
         "request_implementation",
         "read_file_tool",
-        "emit_research_notes",
+        # "emit_research_notes",
         "ripgrep_search",
         "plan_implementation_completed",
         "request_research_and_implementation",
@@ -140,11 +140,11 @@ class CiaynAgent:
     NO_REPEAT_TOOLS = [
         "emit_expert_context",
         "ask_expert",
-        "emit_key_facts",
-        "emit_key_snippet",
+        # "emit_key_facts",
+        # "emit_key_snippet",
         "request_implementation",
         "read_file_tool",
-        "emit_research_notes",
+        # "emit_research_notes",
         "ripgrep_search",
         "plan_implementation_completed",
         "request_research_and_implementation",
@@ -216,6 +216,32 @@ class CiaynAgent:
 
         return last_result_section
 
+    def strip_text_between_backticks(self, input_string):
+        """
+        Strips text before the first "```" and after the last "```" in a string.
+
+        Args:
+            input_string: The string to process.
+
+        Returns:
+            The modified string with text outside the backticks removed, or the
+            original string if no backticks are found.
+        """
+        first_backtick_index = input_string.find("```")
+        last_backtick_index = input_string.rfind("```")
+
+        if first_backtick_index == -1 or last_backtick_index == -1:
+            return input_string  # No backticks found, return original string
+
+        if first_backtick_index == last_backtick_index:
+            extracted_text = input_string[first_backtick_index:]
+            return extracted_text
+
+        # Extract the text between the backticks, including the backticks themselves
+        extracted_text = input_string[first_backtick_index:last_backtick_index + 3]
+
+        return extracted_text
+
     def strip_code_markup(self, code: str) -> str:
         """
         Strips markdown code block markup from a string.
@@ -231,6 +257,7 @@ class CiaynAgent:
         Returns:
             The code with markup removed
         """
+        code = self.strip_text_between_backticks(code)
         code = code.strip()
 
         # Check for code blocks with any language specifier
