@@ -174,7 +174,7 @@ def create_agent(
 
         use_react_agent = should_use_react_agent(model)
 
-        if use_react_agent:
+        if use_react_agent and False:
             logger.debug(
                 "Using create_react_agent to instantiate agent based on model capabilities."
             )
