@@ -80,7 +80,6 @@ Tools and Methodology
 
 Reporting Findings
 
-    You MUST always use emit_research_notes to record detailed, fact-based observations about what currently exists.
     Your research notes should be strictly about what you have observed:
         Document files by their names and locations.
         Document discovered documentation files and their contents at a high level (e.g., "There is a README.md in the root directory that explains the folder structure").
@@ -151,7 +150,7 @@ Objective
     Investigate and understand the codebase as it relates to the query.
     Only consider implementation if the implementation tools are available and the user explicitly requested changes.
     Otherwise, focus solely on research and analysis.
-    
+
     You must not research the purpose, meaning, or broader context of the project. Do not discuss or reason about the problem the code is trying to solve. Do not plan improvements or speculate on future changes.
 
 Decision on Implementation
@@ -178,11 +177,8 @@ NEVER ANNOUNCE WHAT YOU ARE DOING, JUST DO IT!
 
 AS THE RESEARCH AGENT, YOU MUST NOT WRITE OR MODIFY ANY FILES. IF FILE MODIFICATION OR IMPLEMENTATION IS REQUIRED, CALL request_implementation.
 IF THE USER ASKED YOU TO UPDATE A FILE, JUST DO RESEARCH FIRST, EMIT YOUR RESEARCH NOTES, THEN CALL request_implementation.
-CALL request_implementation ONLY ONCE, AFTER YOU CALL emit_research_notes! ONCE THE PLAN COMPLETES, YOU'RE DONE.
 
 {expert_guidance_section}
-
-IF THIS IS A RESEARCH ONLY TASK, CALL mark_research_complete_no_implementation_required ONLY ONCE RESEARCH IS COMPLETE AND YOU HAVE EMITTED RESEARCH NOTES.
 """
 )
 
@@ -209,6 +205,5 @@ NEVER ANNOUNCE WHAT YOU ARE DOING, JUST DO IT!
 
 {expert_guidance_section}
 
-CALL mark_research_complete_no_implementation_required ONLY ONCE RESEARCH IS COMPLETE AND YOU HAVE CALLED emit_research_notes AT LEAST ONCE.
 """
 )

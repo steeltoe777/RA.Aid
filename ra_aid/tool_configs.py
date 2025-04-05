@@ -55,19 +55,19 @@ def set_modification_tools(use_aider=False):
 
 def get_custom_tools() -> List[BaseTool]:
     """Dynamically import and return custom tools from the configured module.
-    
+
     The custom tools module must export a 'tools' attribute that is a list of
     langchain Tool objects (e.g. StructuredTool or other tool classes).
-    
+
     Tools must return a Dict with keys:
     - success: bool
-    - can_retry: bool  
+    - can_retry: bool
     - return_code: int
     - output: str
-    
+
     If can_retry=True, the tool may be retried with the previous output appended
     to the prompt, up to max_retries times.
-    
+
     Returns:
         List[BaseTool]: List of custom tools, or empty list if no custom tools configured
     """
@@ -76,28 +76,28 @@ def get_custom_tools() -> List[BaseTool]:
     if CUSTOM_TOOLS:
         # Custom tools were previously loaded
         return CUSTOM_TOOLS
-    
+
     try:
-        custom_tools_path = get_config_repository().get("custom_tools", False)        
+        custom_tools_path = get_config_repository().get("custom_tools", False)
         if not custom_tools_path:
             return []
-            
+
         # Import the module directly using the provided path
         spec = importlib.util.spec_from_file_location("custom_tools", custom_tools_path)
         if not spec or not spec.loader:
             raise Exception(f"Could not load custom tools module: {custom_tools_path}")
-            
+
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
-        
+
         # Get the tools list
         if not hasattr(module, "tools"):
             raise Exception(f"Custom tools module {custom_tools_path} does not export 'tools' attribute")
-            
+
         tools = module.tools
         if not isinstance(tools, list):
             raise Exception(f"Custom tools module {custom_tools_path} 'tools' attribute must be a list")
-                
+
         # Log which tools were loaded (only during startup)
         if len(tools) > 0:
             custom_tool_output = f"""These custom tools are available to the agent:\n"""
@@ -132,8 +132,10 @@ def get_read_only_tools(
         List of tool functions
     """
     tools = [
+        # emit_key_snippet,
         # Only include emit_related_files if use_aider is True
         *([emit_related_files] if use_aider else []),
+        # emit_key_facts,
         # *TEMPORARILY* disabled to improve tool calling perf.
         # emit_key_snippet,
         # emit_key_facts,
@@ -185,12 +187,12 @@ COMMON_TOOLS = get_read_only_tools(use_aider=use_aider)
 CUSTOM_TOOLS = []
 EXPERT_TOOLS = [emit_expert_context, ask_expert]
 RESEARCH_TOOLS = [
-    emit_research_notes,
+    # emit_research_notes,
     # *TEMPORARILY* disabled to improve tool calling perf.
     # one_shot_completed,
     # monorepo_detected,
     # ui_detected,
-    mark_research_complete_no_implementation_required,
+    # mark_research_complete_no_implementation_required,
 ]
 
 
@@ -327,7 +329,11 @@ def get_web_research_tools(expert_enabled: bool = True):
     Returns:
         list: List of tools configured for web research
     """
-    tools = [web_search_tavily, emit_research_notes, task_completed]
+    tools = [
+        web_search_tavily,
+        # emit_research_notes,
+        task_completed
+    ]
 
     if expert_enabled:
         tools.append(emit_expert_context)
@@ -352,6 +358,7 @@ def get_chat_tools(expert_enabled: bool = True, web_research_enabled: bool = Fal
         ask_human,
         request_research,
         request_research_and_implementation,
+        # emit_key_facts,
         # *TEMPORARILY* disabled to improve tool calling perf.
         # emit_key_facts,
         # delete_key_facts,

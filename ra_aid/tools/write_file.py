@@ -83,7 +83,7 @@ def put_complete_file_contents(
         )
 
         # Add file to related files
-        emit_related_files.invoke({"files": [filepath]})
+        # emit_related_files.invoke({"files": [filepath]})
 
     except Exception as e:
         elapsed = time.time() - start_time
