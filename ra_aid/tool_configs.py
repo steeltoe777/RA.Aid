@@ -192,7 +192,7 @@ RESEARCH_TOOLS = [
     # one_shot_completed,
     # monorepo_detected,
     # ui_detected,
-    mark_research_complete_no_implementation_required,
+    # mark_research_complete_no_implementation_required,
 ]
 
 

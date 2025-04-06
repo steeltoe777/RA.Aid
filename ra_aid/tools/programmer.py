@@ -33,11 +33,7 @@ def run_programming_task(
 ) -> Dict[str, Union[str, int, bool]]:
     """Assign a programming task to a human programmer. Use this instead of trying to write code to files yourself.
 
-    Before using this tool, ensure all related files have been emitted with emit_related_files.
-
     The programmer sees *ONLY* what you provide, no conversation history.
-
-    If you have not called emit_related_files on files that the programmer will need, the programmer will *NOT* be able to see them.
 
     Give detailed instructions including multi-file tasks but do not write the code in the instructions.
 
@@ -75,7 +71,7 @@ def run_programming_task(
     except RuntimeError as e:
         # Repository not initialized
         logger.warning(f"Failed to get related files repository: {e}")
-    
+
     files_to_use = list(
         {os.path.abspath(f) for f in (files or [])}
         | {os.path.abspath(f) for f in related_files_paths}
@@ -136,7 +132,7 @@ def run_programming_task(
         # Log the programming task
         log_work_event(f"Executed programming task: {_truncate_for_log(instructions)}")
 
-        extra_ins = "\n\nRemember to call emit_related_files on any new files created!"
+        extra_ins = ""
 
         # Return structured output
         return {
