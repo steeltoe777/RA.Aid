@@ -1,6 +1,7 @@
 import React, { FC } from 'react';
 import { Trajectory } from '../../models/trajectory'; // Assuming '@models' alias is configured
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card'; // Assuming '@components' alias
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '../ui/collapsible';
 import { CopyToClipboardButton } from '../ui/CopyToClipboardButton'; // Import the copy button
 
 // Define the specific type for this trajectory variant
@@ -17,20 +18,44 @@ export const UserQueryTrajectory: FC<UserQueryTrajectoryProps> = ({ trajectory }
   // Safely access the query from stepData. Use empty string for copy button if query is missing.
   const query = trajectory.stepData?.query ?? '';
   const displayQuery = query || 'Initial query data not available.'; // Fallback for display
+  const formattedTime = new Date(trajectory.created).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
   return (
-    <Card className="mb-4 border-blue-200 bg-blue-50 shadow-sm"> {/* Subtle blue theme */}
-      <CardHeader className="pb-2 pt-3 flex flex-row justify-between items-center"> {/* Use flexbox for layout */}
-        <CardTitle className="text-sm font-semibold text-blue-800"> {/* Styled title */}
-          Initial User Input
-        </CardTitle>
-        {/* Add the copy button, passing the potentially empty query */}
-        <CopyToClipboardButton textToCopy={query} className="h-6 w-6 p-0.5" /> {/* Pass query and optional styling */}
-      </CardHeader>
-      <CardContent className="pb-3"> {/* Compact content padding */}
-        {/* Use pre-wrap to preserve whitespace and line breaks from the original query */}
-        <p className="whitespace-pre-wrap text-sm text-gray-800">{displayQuery}</p>
-      </CardContent>
-    </Card>
+
+    <Collapsible
+      defaultOpen={true}
+      className="w-full border border-border rounded-md overflow-hidden shadow-sm hover:shadow-md transition-all duration-200"
+    >
+      <CollapsibleTrigger className="w-full text-left hover:bg-accent/30 cursor-pointer">
+        <CardHeader className="py-3 px-4">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center space-x-3 flex-1 min-w-0 mr-2"> {/* Ensure title can truncate */}
+              <div className="flex-shrink-0 text-lg">❔</div>
+              <CardTitle className="text-base font-medium truncate">{/* Display title in card */}
+                Query
+              </CardTitle>
+            </div>
+            <div className="flex items-center space-x-2 flex-shrink-0"> {/* Container for button and time */}
+              {/* Use the constructed summary text for copying */}
+              <CopyToClipboardButton textToCopy={query} />
+              <div className="text-xs text-muted-foreground">
+                {formattedTime}
+              </div>
+            </div>
+          </div>
+        </CardHeader>
+      </CollapsibleTrigger>
+
+      <CollapsibleContent>
+        <CardContent className="py-3 px-4 border-t border-border bg-card/50">
+          <div className="text-sm space-y-1">
+            <p><strong>Query:</strong></p>
+            <pre>
+              {query}
+            </pre>
+          </div>
+        </CardContent>
+      </CollapsibleContent>
+    </Collapsible>
   );
 };
