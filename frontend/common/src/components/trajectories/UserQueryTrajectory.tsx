@@ -49,8 +49,7 @@ export const UserQueryTrajectory: FC<UserQueryTrajectoryProps> = ({ trajectory }
       <CollapsibleContent>
         <CardContent className="py-3 px-4 border-t border-border bg-card/50">
           <div className="text-sm space-y-1">
-            <p><strong>Query:</strong></p>
-            <pre>
+            <pre className="bg-muted/50 p-3 rounded-md overflow-x-auto whitespace-pre-wrap">
               {query}
             </pre>
           </div>
