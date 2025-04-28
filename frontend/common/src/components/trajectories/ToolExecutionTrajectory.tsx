@@ -4,6 +4,9 @@ import { Card, CardHeader, CardTitle, CardContent } from '../ui/card';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '../ui/collapsible';
 import { CopyToClipboardButton } from '../ui/CopyToClipboardButton'; // Import the button
 import { Trajectory } from '../../models/trajectory';
+import ReactMarkdown from 'react-markdown'; // Added import
+import remarkGfm from 'remark-gfm'; // Added import
+import { MarkdownCodeBlock } from '../ui/MarkdownCodeBlock'; // Added import
 
 
 interface ToolExecutionTrajectoryProps {
@@ -21,6 +24,13 @@ export const ToolExecutionTrajectory: React.FC<ToolExecutionTrajectoryProps> = (
   // Get the display name of the tool
   const getToolDisplayName = (trajectory: Trajectory) => {
     const toolName =  trajectory.toolName;
+    if(toolName === 'ask_expert'){
+      if(typeof trajectory?.stepData?.response_content === 'string'){
+        return 'Expert Response'
+      } else {
+        return 'Ask Expert'
+      }
+    }
     return toolName
       .replace(/_/g, ' ')
       .replace(/\btool\b/gi, '')
@@ -44,8 +54,10 @@ export const ToolExecutionTrajectory: React.FC<ToolExecutionTrajectoryProps> = (
     } else if (toolName === 'web_search_tavily') {
       return toolParameters?.query || '';
     } else if (toolName === 'ask_expert') {
-      // For expert, copy the response content if available, otherwise the query
-      return stepData?.response_content ?? toolParameters?.question ?? '';
+      // For expert, format question and response together
+      const question = toolParameters?.question ?? '';
+      const response = stepData?.response_content ?? '';
+      return `# Parameters:\n\n${question}\n\n---\n\n# Expert Response:\n\n${response}`;
     }
     // Ensure result is a non-empty object before stringifying
     if (typeof toolResult === 'object' && toolResult !== null && Object.keys(toolResult).length > 0) {
@@ -135,7 +147,8 @@ export const ToolExecutionTrajectory: React.FC<ToolExecutionTrajectoryProps> = (
 
       <CollapsibleContent>
         <CardContent className="py-3 px-4 border-t border-border bg-card/50">
-          {Object.keys(toolParameters).length > 0 && (
+          {/* --- Parameters (excluding ask_expert) --- */}
+          {Object.keys(toolParameters).length > 0 && toolName !== 'ask_expert' && (
             <div className="mb-4">
               <h4 className="text-sm font-semibold mb-2">Parameters:</h4>
               <pre className="text-xs bg-muted p-2 rounded-md overflow-auto max-h-60">
@@ -168,25 +181,41 @@ export const ToolExecutionTrajectory: React.FC<ToolExecutionTrajectoryProps> = (
             </div>
           )}
 
-          {/* --- START EXPERT RESPONSE BLOCK --- */}
-          {toolName === 'ask_expert' &&
-            typeof stepData?.response_content === 'string' &&
-            stepData.response_content.length > 0 && (
-            <div className="mt-4 pt-4 border-t border-border/50"> {/* Add margin/border */}
-              <h4 className="text-sm font-semibold mb-2">Expert Response:</h4>
-              <pre className="text-xs bg-muted p-2 rounded-md overflow-auto max-h-96 whitespace-pre-wrap break-words"> {/* Increased max-h, added wrap/break */}
-                {stepData.response_content}
-              </pre>
+          {/* --- START ASK_EXPERT SPECIFIC BLOCK --- */}
+          {toolName === 'ask_expert' && (
+            <div className="prose prose-sm dark:prose-invert max-w-none">
+              {/* Render Response */}
+              {typeof stepData?.response_content === 'string' ?
+                stepData.response_content.length > 0 && (
+                <>
+                  <h4 className="text-sm font-semibold mb-2">Expert Response:</h4> {/* Ensure heading styling aligns */}                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    components={{ code: MarkdownCodeBlock }}
+                  >
+                    {stepData.response_content}
+                  </ReactMarkdown>
+                </>
+                ) : (
+                <>
+                  <h4 className="text-sm font-semibold mb-2 !mt-0">Parameters:</h4> {/* Ensure heading styling aligns */}                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    components={{ code: MarkdownCodeBlock }}
+                  >
+                    {toolParameters.question}
+                  </ReactMarkdown>
+                </>
+              )}
             </div>
           )}
-          {/* --- END EXPERT RESPONSE BLOCK --- */}
+          {/* --- END ASK_EXPERT SPECIFIC BLOCK --- */}
 
           {isError && (
             <div className="mt-4 pt-4 border-t border-border/50">
               <h4 className="text-sm font-semibold mb-2 text-red-500">Error:</h4>
               <pre className="text-xs bg-red-50 dark:bg-red-900/20 p-2 rounded-md text-red-800 dark:text-red-200 overflow-auto max-h-60">
                 {trajectory.errorMessage || 'Unknown error'}
-                {trajectory.errorType && ` (${trajectory.errorType})`}                {trajectory.errorDetails && `\nDetails: ${trajectory.errorDetails}`}
+                {trajectory.errorType && ` (${trajectory.errorType})`}
+                {trajectory.errorDetails && `\nDetails: ${trajectory.errorDetails}`}
               </pre>
             </div>
           )}
