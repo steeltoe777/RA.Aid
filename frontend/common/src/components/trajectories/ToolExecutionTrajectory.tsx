@@ -39,19 +39,23 @@ export const ToolExecutionTrajectory: React.FC<ToolExecutionTrajectoryProps> = (
   // Prepare text for clipboard (for non-shell tools)
   const getResultTextToCopy = (): string => {
     if (toolName === 'run_shell_command') {
-      return toolParameters?.command || '';
+      // For shell commands, copy the output if available, otherwise the command
+      return toolResult?.output ?? toolParameters?.command ?? '';
     } else if (toolName === 'web_search_tavily') {
       return toolParameters?.query || '';
+    } else if (toolName === 'ask_expert') {
+      // For expert, copy the response content if available, otherwise the query
+      return stepData?.response_content ?? toolParameters?.question ?? '';
     }
-    // Ensure it's a non-empty object before stringifying
+    // Ensure result is a non-empty object before stringifying
     if (typeof toolResult === 'object' && toolResult !== null && Object.keys(toolResult).length > 0) {
       return JSON.stringify(toolResult, null, 2);
     }
     // Handle strings and potentially other primitives (convert to string)
-    if (typeof toolResult !== 'object') {
+    if (toolResult !== null && toolResult !== undefined && typeof toolResult !== 'object') {
         return String(toolResult);
     }
-    // Return parameters for other tool calls
+    // Fallback to parameters if no result
     if (typeof toolParameters === 'object' && Object.keys(toolParameters).length > 0) {
       return JSON.stringify(toolParameters, null, 2);
     }
@@ -59,8 +63,8 @@ export const ToolExecutionTrajectory: React.FC<ToolExecutionTrajectoryProps> = (
     return '';
   };
 
-  // Check if there's actually a result to display/copy (handles null/undefined/empty object)
-  // Treat empty strings as valid results for copying/display
+  // Check if there's actually a result to display (handles null/undefined/empty object)
+  // Treat empty strings as valid results for display
   const hasResultData = toolResult !== null && toolResult !== undefined && (typeof toolResult !== 'object' || Object.keys(toolResult).length > 0 || toolResult === "");
 
   // Determine if the copy button should be rendered and what text it should copy
@@ -68,7 +72,7 @@ export const ToolExecutionTrajectory: React.FC<ToolExecutionTrajectoryProps> = (
   let shouldRenderButton = false;
   let finalFormattedTextToCopy: string | null = null;
 
-  // For tools, copy error message if error, otherwise copy result if available
+  // For tools, copy error message if error, otherwise copy result/content if available
   if (isError && trajectory.errorMessage) {
     rawTextToCopy = trajectory.errorMessage;
     shouldRenderButton = true;
@@ -82,10 +86,12 @@ export const ToolExecutionTrajectory: React.FC<ToolExecutionTrajectoryProps> = (
 
   // Prepend heading if we have text to copy
   if (shouldRenderButton && rawTextToCopy !== null) {
-      finalFormattedTextToCopy = `# ${displayName}\n\n${rawTextToCopy}`;
-      if(['web_search_tavily', 'run_shell_command'].indexOf(toolName) >= 0){
-        // Copy the command or string query unformatted
-        finalFormattedTextToCopy = rawTextToCopy;
+      const heading = `# ${displayName}\n\n`;
+      // For specific tools, just copy the raw content without the heading
+      if(['web_search_tavily', 'run_shell_command', 'ask_expert'].includes(toolName)) {
+          finalFormattedTextToCopy = rawTextToCopy;
+      } else {
+          finalFormattedTextToCopy = heading + rawTextToCopy;
       }
   }
 
@@ -142,8 +148,9 @@ export const ToolExecutionTrajectory: React.FC<ToolExecutionTrajectoryProps> = (
             </div>
           )}
 
-          {(!isError && hasResultData) && ( // Only show result section if not error and data exists
-            <div>
+          {/* Display Result for non-shell, non-expert tools */}
+          {(!isError && hasResultData && toolName !== 'run_shell_command' && toolName !== 'ask_expert') && (
+            <div className="mb-4">
               <h4 className="text-sm font-semibold mb-2">Result:</h4>
               <pre className="text-xs bg-muted p-2 rounded-md overflow-auto max-h-60">
                 {formatValue(toolResult)}
@@ -151,12 +158,35 @@ export const ToolExecutionTrajectory: React.FC<ToolExecutionTrajectoryProps> = (
             </div>
           )}
 
+          {/* Display Shell Command Output */}
+          {(!isError && toolName === 'run_shell_command' && typeof toolResult?.output === 'string' && toolResult.output.length > 0) && (
+            <div className="mb-4">
+                <h4 className="text-sm font-semibold mb-2">Output:</h4>
+                <pre className="text-xs bg-muted p-2 rounded-md overflow-auto max-h-96">
+                    {toolResult.output}
+                </pre>
+            </div>
+          )}
+
+          {/* --- START EXPERT RESPONSE BLOCK --- */}
+          {toolName === 'ask_expert' &&
+            typeof stepData?.response_content === 'string' &&
+            stepData.response_content.length > 0 && (
+            <div className="mt-4 pt-4 border-t border-border/50"> {/* Add margin/border */}
+              <h4 className="text-sm font-semibold mb-2">Expert Response:</h4>
+              <pre className="text-xs bg-muted p-2 rounded-md overflow-auto max-h-96 whitespace-pre-wrap break-words"> {/* Increased max-h, added wrap/break */}
+                {stepData.response_content}
+              </pre>
+            </div>
+          )}
+          {/* --- END EXPERT RESPONSE BLOCK --- */}
+
           {isError && (
-            <div>
+            <div className="mt-4 pt-4 border-t border-border/50">
               <h4 className="text-sm font-semibold mb-2 text-red-500">Error:</h4>
               <pre className="text-xs bg-red-50 dark:bg-red-900/20 p-2 rounded-md text-red-800 dark:text-red-200 overflow-auto max-h-60">
                 {trajectory.errorMessage || 'Unknown error'}
-                {trajectory.errorType && ` (${trajectory.errorType})`}
+                {trajectory.errorType && ` (${trajectory.errorType})`}                {trajectory.errorDetails && `\nDetails: ${trajectory.errorDetails}`}
               </pre>
             </div>
           )}
