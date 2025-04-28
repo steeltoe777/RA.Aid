@@ -15,7 +15,8 @@ import {
   TaskCompletedTrajectory, // <-- Import the new TaskCompletedTrajectory component
   PlanCompletedTrajectory,
   FileWriteTrajectory, // <-- Import the new FileWriteTrajectory component
-  FileStrReplaceTrajectory // <-- Import the new FileStrReplaceTrajectory component
+  FileStrReplaceTrajectory, // <-- Import the new FileStrReplaceTrajectory component
+  UserQueryTrajectory
 } from './trajectories';
 import { useTrajectoryStore, useSessionStore } from '../store'; // <-- Import useSessionStore
 import { Trajectory } from '../models/trajectory';
@@ -161,6 +162,8 @@ export const TrajectoryPanel: React.FC<TrajectoryPanelProps> = ({
         break;
       case 'model_usage': // Hide model usage trajectories
         return null; // Return null directly to skip rendering
+      case 'user_query':
+        return <UserQueryTrajectory trajectory={trajectory} key={trajectory.id} />;
       default:
         // console.warn("Rendering GenericTrajectory for unknown type:", trajectory.recordType, trajectory);
         component = <GenericTrajectory key={trajectory.id} trajectory={trajectory} />;
