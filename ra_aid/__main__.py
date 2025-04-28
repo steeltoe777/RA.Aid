@@ -54,6 +54,7 @@ from ra_aid.database.repositories.related_files_repository import (
     RelatedFilesRepositoryManager,
 )
 
+
 from ra_aid.database.repositories.work_log_repository import WorkLogRepositoryManager
 from ra_aid.database.repositories.config_repository import (
     ConfigRepositoryManager,
@@ -1088,23 +1089,46 @@ def main():
                     print_error(error_message)
                     sys.exit(1)
 
+                base_task = "" # Initialize base_task
                 if args.message:  # Only set base_task if message exists
                     base_task = args.message
 
                 # Record CLI input in database
+                human_input_id = None # Initialize before try
+                session_id = None # Initialize before try
                 try:
-                    # Using get_human_input_repository() to access the repository from context
                     human_input_repository = get_human_input_repository()
-                    # Get current session ID
-                    session_id = session_repo.get_current_session_id()
-                    human_input_repository.create(
+                    session_id = session_repo.get_current_session_id() # Capture session_id here
+                    human_input_record = human_input_repository.create( # Capture record
                         content=base_task, source="cli", session_id=session_id
                     )
+                    human_input_id = human_input_record.id # Get ID
                     # Run garbage collection to ensure we don't exceed 100 inputs
                     human_input_repository.garbage_collect()
                     logger.debug(f"Recorded CLI input: {base_task}")
                 except Exception as e:
                     logger.error(f"Failed to record CLI input: {str(e)}")
+                    human_input_id = None # Ensure None on failure
+
+                if human_input_id:
+                    try:
+                        trajectory_repo = get_trajectory_repository() # Get the repository instance
+                        logger.debug(f"Creating user_query trajectory record for session {session_id} (CLI), human_input_id {human_input_id}.")
+                        trajectory_repo.create(
+                            session_id=session_id,
+                            human_input_id=human_input_id,
+                            record_type="user_query",
+                            step_data={
+                                "display_title": "User Query",
+                                "query": base_task,
+                            },
+                        )
+                        logger.info(f"Created user_query trajectory for session {session_id} (CLI).")
+                    except Exception as e:
+                        logger.exception(f"Error creating user_query trajectory for session {session_id} (CLI): {e}")
+                else:
+                    logger.warning(f"Skipping user_query trajectory creation for session {session_id} (CLI) due to missing human_input_id.")
+
                 config = {
                     "configurable": {"thread_id": str(uuid.uuid4())},
                     "recursion_limit": args.recursion_limit,
@@ -1165,14 +1189,14 @@ def main():
 
                 # Record stage transition in trajectory
                 trajectory_repo = get_trajectory_repository()
-                human_input_id = get_human_input_repository().get_most_recent_id()
+                # Use the human_input_id captured earlier for stage transition
                 trajectory_repo.create(
                     step_data={
                         "stage": "research_stage",
                         "display_title": "Research Stage",
                     },
                     record_type="stage_transition",
-                    human_input_id=human_input_id,
+                    human_input_id=human_input_id, # Pass the potentially None ID
                 )
 
                 # Initialize research model with potential overrides

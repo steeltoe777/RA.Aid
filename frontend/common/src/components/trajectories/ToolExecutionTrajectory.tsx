@@ -1,7 +1,10 @@
+
 import React from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '../ui/card';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '../ui/collapsible';
+import { CopyToClipboardButton } from '../ui/CopyToClipboardButton'; // Import the button
 import { Trajectory } from '../../models/trajectory';
+
 
 interface ToolExecutionTrajectoryProps {
   trajectory: Trajectory;
@@ -16,46 +19,114 @@ export const ToolExecutionTrajectory: React.FC<ToolExecutionTrajectoryProps> = (
   };
 
   // Get the display name of the tool
-  const getToolDisplayName = (toolName: string): string => {
-    return toolName.replace(/_/g, ' ').replace('tool', '').trim();
+  const getToolDisplayName = (trajectory: Trajectory) => {
+    const toolName =  trajectory.toolName;
+    return toolName
+      .replace(/_/g, ' ')
+      .replace(/\btool\b/gi, '')
+      .trim()
+      .replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase()); // Convert to Title Case
   };
 
   // Extract relevant data
   const toolName = trajectory.toolName;
   const toolParameters = trajectory.toolParameters || {};
-  const toolResult = trajectory.toolResult || {};
+  const toolResult = trajectory.toolResult; // Keep original type for logic
   const stepData = trajectory.stepData || {};
-  const displayName = getToolDisplayName(toolName);
+  const displayName = getToolDisplayName(trajectory);
   const isError = trajectory.isError;
-  
-  // Format timestamp
-  const formatTime = (timestamp: string) => {
-    return new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+  // Prepare text for clipboard (for non-shell tools)
+  const getResultTextToCopy = (): string => {
+    if (toolName === 'run_shell_command') {
+      return toolParameters?.command || '';
+    } else if (toolName === 'web_search_tavily') {
+      return toolParameters?.query || '';
+    }
+    // Ensure it's a non-empty object before stringifying
+    if (typeof toolResult === 'object' && toolResult !== null && Object.keys(toolResult).length > 0) {
+      return JSON.stringify(toolResult, null, 2);
+    }
+    // Handle strings and potentially other primitives (convert to string)
+    if (typeof toolResult !== 'object') {
+        return String(toolResult);
+    }
+    // Return parameters for other tool calls
+    if (typeof toolParameters === 'object' && Object.keys(toolParameters).length > 0) {
+      return JSON.stringify(toolParameters, null, 2);
+    }
+    // Handle empty objects or cases not caught above
+    return '';
   };
+
+  // Check if there's actually a result to display/copy (handles null/undefined/empty object)
+  // Treat empty strings as valid results for copying/display
+  const hasResultData = toolResult !== null && toolResult !== undefined && (typeof toolResult !== 'object' || Object.keys(toolResult).length > 0 || toolResult === "");
+
+  // Determine if the copy button should be rendered and what text it should copy
+  let rawTextToCopy: string | null = null;
+  let shouldRenderButton = false;
+  let finalFormattedTextToCopy: string | null = null;
+
+  // For tools, copy error message if error, otherwise copy result if available
+  if (isError && trajectory.errorMessage) {
+    rawTextToCopy = trajectory.errorMessage;
+    shouldRenderButton = true;
+  } else {
+    rawTextToCopy = getResultTextToCopy();
+    // Only render button if there's actually text to copy (handles empty string result from getResultTextToCopy)
+    if (rawTextToCopy !== '') {
+        shouldRenderButton = true;
+    }
+  }
+
+  // Prepend heading if we have text to copy
+  if (shouldRenderButton && rawTextToCopy !== null) {
+      finalFormattedTextToCopy = `# ${displayName}\n\n${rawTextToCopy}`;
+      if(['web_search_tavily', 'run_shell_command'].indexOf(toolName) >= 0){
+        // Copy the command or string query unformatted
+        finalFormattedTextToCopy = rawTextToCopy;
+      }
+  }
 
   return (
     <Collapsible className="w-full border border-border rounded-md overflow-hidden shadow-sm hover:shadow-md transition-all duration-200">
       <CollapsibleTrigger className="w-full text-left hover:bg-accent/30 cursor-pointer">
         <CardHeader className="py-3 px-4">
           <div className="flex justify-between items-center">
-            <div className="flex items-center space-x-3">
+            <div className="flex items-center space-x-3 mr-2 overflow-hidden"> {/* Added overflow-hidden */}
               <div className="flex-shrink-0 text-lg">🛠️</div>
-              <CardTitle className="text-base font-medium">
+              <CardTitle className="text-base font-medium truncate"> {/* Added truncate */}
                 {displayName}
               </CardTitle>
             </div>
-            <div className="text-xs text-muted-foreground">
-              {formatTime(trajectory.created)}
+            {/* Container for timestamp and copy button */}
+            <div className="flex items-center space-x-2 flex-shrink-0">
+              {/* --- BUTTON POSITIONING (BEFORE TIMESTAMP) --- */}
+              {/* Render the copy button conditionally with the formatted text */}
+              {shouldRenderButton && finalFormattedTextToCopy !== null && (
+                 <CopyToClipboardButton textToCopy={finalFormattedTextToCopy} className="p-1 h-6 w-6" tooltipSide="left" />
+              )}
+              {/* Timestamp */}
+              <div className="text-xs text-muted-foreground">
+              {trajectory.created
+                ? new Date(trajectory.created).toLocaleTimeString([], {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })
+                : 'Invalid Date'}
+            </div>
+              {/* --- END BUTTON POSITIONING --- */}
             </div>
           </div>
           {stepData.display && (
-            <div className="text-sm text-muted-foreground mt-1 line-clamp-2">
+            <div className="text-sm text-muted-foreground mt-1 line-clamp-2 break-words">
               {typeof stepData.display === 'string' ? stepData.display : JSON.stringify(stepData.display)}
             </div>
           )}
         </CardHeader>
       </CollapsibleTrigger>
-      
+
       <CollapsibleContent>
         <CardContent className="py-3 px-4 border-t border-border bg-card/50">
           {Object.keys(toolParameters).length > 0 && (
@@ -70,8 +141,8 @@ export const ToolExecutionTrajectory: React.FC<ToolExecutionTrajectoryProps> = (
               </pre>
             </div>
           )}
-          
-          {(!isError && Object.keys(toolResult).length > 0) && (
+
+          {(!isError && hasResultData) && ( // Only show result section if not error and data exists
             <div>
               <h4 className="text-sm font-semibold mb-2">Result:</h4>
               <pre className="text-xs bg-muted p-2 rounded-md overflow-auto max-h-60">
@@ -79,7 +150,7 @@ export const ToolExecutionTrajectory: React.FC<ToolExecutionTrajectoryProps> = (
               </pre>
             </div>
           )}
-          
+
           {isError && (
             <div>
               <h4 className="text-sm font-semibold mb-2 text-red-500">Error:</h4>
@@ -89,7 +160,7 @@ export const ToolExecutionTrajectory: React.FC<ToolExecutionTrajectoryProps> = (
               </pre>
             </div>
           )}
-          
+
           {trajectory.currentCost !== null && trajectory.currentCost !== undefined && (
             <div className="mt-3 pt-3 border-t border-border/50 text-xs text-muted-foreground">
               <span className="flex items-center">
