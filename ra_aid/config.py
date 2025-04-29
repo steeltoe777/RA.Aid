@@ -88,9 +88,9 @@ def save_default_values(values: Dict[str, Any], project_state_dir: Optional[str]
 _default_values = load_default_values()
 
 # Set default provider and model from the loaded values or use empty strings as fallback
-DEFAULT_PROVIDER = _default_values.get("provider", "")
-DEFAULT_MODEL = _default_values.get("model", "")
-DEFAULT_EXPERT_MODEL = _default_values.get("expert_model", "")
+DEFAULT_PROVIDER = _default_values.get("provider", "anthropic")
+DEFAULT_MODEL = _default_values.get("model", "claude-3-7-sonnet-20250219")
+DEFAULT_EXPERT_MODEL = _default_values.get("expert_model", "claude-3-7-sonnet-20250219")
 
 
 DEFAULT_ANTHROPIC_MODEL = "claude-3-7-sonnet-20250219"

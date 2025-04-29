@@ -8,7 +8,7 @@ __pycache__/
 /.ra-aid/
 .coverage
 /.venv
-/venv
+/venv*
 /.idea
 /htmlcov
 .envrc
@@ -26,3 +26,5 @@ ra_aid/__main__.build
 ra_aid/__main__.dist
 ra_aid/__main__.onefile-build
 ra_aid/__main__.exe
+.github
+.githooks
