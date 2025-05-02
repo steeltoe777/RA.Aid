@@ -5,6 +5,7 @@ import { cn } from '../../utils'; // Assuming cn utility exists for class mergin
 interface CopyToClipboardButtonProps {
   textToCopy: string;
   className?: string;
+  tooltipText?: string; // Optional tooltip text
 }
 
 export const CopyToClipboardButton: React.FC<CopyToClipboardButtonProps> = ({
