@@ -262,7 +262,7 @@ export function safeBackendToTrajectory(data: unknown): Trajectory | null {
       // console.log('Successfully converted to frontend trajectory:', JSON.stringify(result, null, 2));
 
       return result;
-    } catch (validationError) {
+    } catch (validationError: any) {
       // Detailed validation error logging
       console.error('Validation error details:', validationError);
 
@@ -271,6 +271,7 @@ export function safeBackendToTrajectory(data: unknown): Trajectory | null {
         console.error('Zod validation errors:', JSON.stringify(validationError.errors, null, 2));
 
         // Log the specific fields that failed validation
+        // @ts-ignore
         validationError.errors.forEach(err => {
           console.error(`Field "${err.path.join('.') }": ${err.message}`);
         });
