@@ -6,6 +6,9 @@ interface CopyToClipboardButtonProps {
   textToCopy: string;
   className?: string;
   tooltipText?: string; // Optional tooltip text
+  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl'; // Optional size for tooltip
+  variant?: string;
+  tooltipSide?: string;
 }
 
 export const CopyToClipboardButton: React.FC<CopyToClipboardButtonProps> = ({
