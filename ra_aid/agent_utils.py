@@ -127,6 +127,7 @@ def create_agent(
     *,
     checkpointer: Any = None,
     agent_type: str = "default",
+    session_id: Optional[int] = None,
 ):
     """Create a react agent with the given configuration.
 
@@ -135,6 +136,7 @@ def create_agent(
         tools: List of tools to provide to the agent
         checkpointer: Optional memory checkpointer
         agent_type: Type of agent to create (default: "default")
+        session_id: Optional session ID for the agent
 
     Returns:
         The created agent instance
@@ -186,7 +188,7 @@ def create_agent(
         else:
             cpm("Using CIAYN Agent")
             logger.debug("Using CiaynAgent agent instance based on model capabilities.")
-            return CiaynAgent(model, tools, max_tokens=max_input_tokens, config=config)
+            return CiaynAgent(model, tools, max_tokens=max_input_tokens, config=config, session_id=session_id)
 
     except Exception as e:
         # Default to REACT agent if provider/model detection fails
