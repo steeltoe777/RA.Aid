@@ -23,6 +23,7 @@ from ra_aid.env_inv_context import EnvInvManager
 from ra_aid.env_inv import EnvDiscovery
 from ra_aid.llm import initialize_llm, get_model_default_temperature
 from ra_aid.server.broadcast_sender import send_broadcast
+from ra_aid.server.agent_thread_manager import agent_thread_registry
 
 # Create logger
 logger = logging.getLogger(__name__)
@@ -255,7 +256,8 @@ def run_agent_thread(
                 research_only=research_only,
                 hil=False,  # No human-in-the-loop for API
                 web_research_enabled=web_research_enabled,
-                thread_id=thread_id_str # run_research_agent might expect string thread_id
+                thread_id=thread_id_str, # run_research_agent might expect string thread_id
+                session_id=session_id,  # Pass integer session_id
             )
             logger.info(f"Agent execution completed successfully for session {session_id}.")
             # --- > Agent Execution Logic <--- END
@@ -346,6 +348,9 @@ async def spawn_agent(
             "thread_id": str(session_id_int),
         }
 
+        # Create stop event for thread termination
+        stop_event = threading.Event()
+
         # Start the agent thread
         thread = threading.Thread(
             target=run_agent_thread,
@@ -358,9 +363,17 @@ async def spawn_agent(
             kwargs={
                 "temperature": temperature,
                 "thread_config": thread_config,
+                "stop_event": stop_event,
             }
         )
         thread.daemon = True  # Thread will terminate when main process exits
+
+        # Register the thread in the global registry
+        agent_thread_registry[session_id_int] = {
+            "thread": thread,
+            "stop_event": stop_event
+        }
+
         thread.start()
 
         # Return the session ID as int

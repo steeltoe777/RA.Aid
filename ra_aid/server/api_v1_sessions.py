@@ -15,6 +15,7 @@ from pydantic import BaseModel, Field
 from ra_aid.database.repositories.session_repository import SessionRepository, get_session_repository
 from ra_aid.database.repositories.trajectory_repository import TrajectoryRepository, get_trajectory_repository
 from ra_aid.database.pydantic_models import SessionModel, TrajectoryModel
+from ra_aid.server.agent_thread_manager import stop_agent, is_agent_running
 
 # Create API router
 router = APIRouter(
@@ -285,4 +286,39 @@ async def get_session_trajectories(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Database error: {str(e)}",
+        )
+
+
+@router.delete(
+    "/{session_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Kill session",
+    description="Kill a session by ID",
+)
+async def delete_session(
+    session_id: int,
+) -> None:
+    """
+    Kill a session by ID.
+
+    Args:
+        session_id: The ID of the session to kill
+        session_repo: SessionRepository dependency injection
+
+    Raises:
+        HTTPException: With a 404 status code if the session is not found
+        HTTPException: With a 500 status code if there's a database error
+    """
+    if not is_agent_running(session_id):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"No running agent thread found for session {session_id}"
+        )
+
+    success = stop_agent(session_id)
+
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to stop agent for session {session_id}"
         )
