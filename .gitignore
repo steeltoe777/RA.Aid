@@ -22,3 +22,5 @@ node_modules/
 /.vscode
 /frontend/common/dist/
 /.ra-prompt
+
+.qodo
