@@ -13,24 +13,6 @@ import { AgentSession } from '../models/session';
  * Returns an array of sample agent steps
  */
 export function getSampleAgentSteps(): Trajectory[] {
-  /**
-   *   id: z.number().optional(), // Changed from z.string()
-   *   created: z.string(),
-   *   updated: z.string(),
-   *   toolName: z.string(),
-   *   isError: z.boolean().default(false),
-   *   recordType: z.string(), stage_transition, project_status, error
-   *   toolParameters: z.record(z.any()).nullable().optional(),
-   *   toolResult: z.record(z.any()).nullable().optional(),
-   *   stepData: z.record(z.any()).nullable().optional(),
-   *   currentCost: z.number().nullable().optional(),
-   *   inputTokens: z.number().nullable().optional(),
-   *   outputTokens: z.number().nullable().optional(),
-   *   errorMessage: z.string().nullable().optional(),
-   *   errorType: z.string().nullable().optional(),
-   *   errorDetails: z.record(z.any()).nullable().optional(),
-   *   sessionId: z.number().nullable().optional(), // Changed from z.string()
-   */
   return [
     {
       id: 1,
