@@ -293,7 +293,6 @@ export function safeBackendToTrajectory(data: unknown): Trajectory | null {
         console.error('Zod validation errors:', JSON.stringify(validationError.errors, null, 2));
 
         // Log the specific fields that failed validation
-        // @ts-ignore
         validationError.errors.forEach(err => {
           console.error(`Field "${err.path.join('.') }": ${err.message}`);
         });
