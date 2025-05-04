@@ -14,8 +14,8 @@ import { z } from 'zod';
 // import { AgentSession as UtilAgentSession, AgentStep } from '../utils/types';
 
 // Define the possible status values for a session
-export type SessionStatus = 'pending' | 'running' | 'completed' | 'error' | 'unknown';
-const sessionStatusEnum = z.enum(['pending', 'running', 'completed', 'error', 'unknown']);
+export type SessionStatus = 'pending' | 'running' | 'completed' | 'error' | 'unknown' | 'halting' | 'halted';
+const sessionStatusEnum = z.enum(['pending', 'running', 'completed', 'error', 'unknown', 'halting', 'halted']);
 
 /**
  * Helper function to create a resilient datetime schema that:
