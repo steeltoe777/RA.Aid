@@ -36,6 +36,9 @@ const setupTheme = () => {
  * @param {AgentSession} session
  */
 const isHaltable = (session: AgentSession) => {
+  console.log(`[isHaltable] Checking if session ${session.id} is haltable; status = '${session.status}'`);
+  console.log("[isHaltable] returning", session.status === 'running' || session.status === 'pending' || session.status === 'unknown');
+
   return session.status === 'running' || session.status === 'pending' || session.status === 'unknown';
 }
 
@@ -64,7 +67,7 @@ const SessionHaltButton = ({ session }: { session: AgentSession }) => {
       .then((response) => {
         if (response.ok) {
           console.log(`[SessionHaltButton] Session ${id} halted successfully`);
-          updateSessionStatus(id, 'completed'); // Update status in store
+          updateSessionStatus(id, 'halted'); // Update status in store
         } else {
           console.error(`[SessionHaltButton] Failed to halt session ${id}`);
         }
@@ -75,7 +78,7 @@ const SessionHaltButton = ({ session }: { session: AgentSession }) => {
   };
 
   return (
-    <Button variant="destructive" size="sm" onClick={handleHalt} disabled={status !== 'running'}>
+    <Button variant="destructive" size="sm" onClick={handleHalt}>
       {/* Stop Button Icon */}
       STOP
     </Button>
@@ -138,7 +141,7 @@ export const DefaultAgentScreen: React.FC = () => {
       const sessionPayload = messageData.payload as { id: number; status: string };
       if (
         sessionPayload.id && typeof sessionPayload.id === 'number' &&
-        sessionPayload.status && ['pending', 'running', 'completed', 'error'].includes(sessionPayload.status)
+        sessionPayload.status && ['pending', 'running', 'completed', 'error', 'halting', 'halted'].includes(sessionPayload.status)
       ) {
          console.log(`[DefaultAgentScreen] Processing session_update for ${sessionPayload.id} with status ${sessionPayload.status}`)
          updateSessionStatus(sessionPayload.id, sessionPayload.status as SessionStatus);
