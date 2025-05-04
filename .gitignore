@@ -28,3 +28,4 @@ ra_aid/__main__.onefile-build
 ra_aid/__main__.exe
 .github
 .githooks
+.qodo

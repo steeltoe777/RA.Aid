@@ -4,6 +4,9 @@ import { Card, CardHeader, CardTitle, CardContent } from '../ui/card';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '../ui/collapsible';
 import { CopyToClipboardButton } from '../ui/CopyToClipboardButton'; // Import the button
 import { Trajectory } from '../../models/trajectory';
+import ReactMarkdown from 'react-markdown'; // Added import
+import remarkGfm from 'remark-gfm'; // Added import
+import { MarkdownCodeBlock } from '../ui/MarkdownCodeBlock'; // Added import
 
 
 interface ToolExecutionTrajectoryProps {
@@ -21,6 +24,13 @@ export const ToolExecutionTrajectory: React.FC<ToolExecutionTrajectoryProps> = (
   // Get the display name of the tool
   const getToolDisplayName = (trajectory: Trajectory) => {
     const toolName =  trajectory.toolName;
+    if(toolName === 'ask_expert'){
+      if(typeof trajectory?.stepData?.response_content === 'string'){
+        return 'Expert Response'
+      } else {
+        return 'Ask Expert'
+      }
+    }
     return toolName
       .replace(/_/g, ' ')
       .replace(/\btool\b/gi, '')
@@ -39,19 +49,25 @@ export const ToolExecutionTrajectory: React.FC<ToolExecutionTrajectoryProps> = (
   // Prepare text for clipboard (for non-shell tools)
   const getResultTextToCopy = (): string => {
     if (toolName === 'run_shell_command') {
-      return toolParameters?.command || '';
+      // For shell commands, copy the output if available, otherwise the command
+      return toolResult?.output ?? toolParameters?.command ?? '';
     } else if (toolName === 'web_search_tavily') {
       return toolParameters?.query || '';
+    } else if (toolName === 'ask_expert') {
+      // For expert, format question and response together
+      const question = toolParameters?.question ?? '';
+      const response = stepData?.response_content ?? '';
+      return `# Parameters:\n\n${question}\n\n---\n\n# Expert Response:\n\n${response}`;
     }
-    // Ensure it's a non-empty object before stringifying
+    // Ensure result is a non-empty object before stringifying
     if (typeof toolResult === 'object' && toolResult !== null && Object.keys(toolResult).length > 0) {
       return JSON.stringify(toolResult, null, 2);
     }
     // Handle strings and potentially other primitives (convert to string)
-    if (typeof toolResult !== 'object') {
+    if (toolResult !== null && toolResult !== undefined && typeof toolResult !== 'object') {
         return String(toolResult);
     }
-    // Return parameters for other tool calls
+    // Fallback to parameters if no result
     if (typeof toolParameters === 'object' && Object.keys(toolParameters).length > 0) {
       return JSON.stringify(toolParameters, null, 2);
     }
@@ -59,16 +75,16 @@ export const ToolExecutionTrajectory: React.FC<ToolExecutionTrajectoryProps> = (
     return '';
   };
 
-  // Check if there's actually a result to display/copy (handles null/undefined/empty object)
-  // Treat empty strings as valid results for copying/display
-  const hasResultData = toolResult !== null && toolResult !== undefined && (typeof toolResult !== 'object' || Object.keys(toolResult).length > 0 || toolResult === "");
+  // Check if there's actually a result to display (handles null/undefined/empty object)
+  // Treat empty strings as valid results for display
+  const hasResultData = toolResult !== null && toolResult !== undefined && (typeof toolResult !== 'object' || Object.keys(toolResult).length > 0);
 
   // Determine if the copy button should be rendered and what text it should copy
   let rawTextToCopy: string | null = null;
   let shouldRenderButton = false;
   let finalFormattedTextToCopy: string | null = null;
 
-  // For tools, copy error message if error, otherwise copy result if available
+  // For tools, copy error message if error, otherwise copy result/content if available
   if (isError && trajectory.errorMessage) {
     rawTextToCopy = trajectory.errorMessage;
     shouldRenderButton = true;
@@ -82,10 +98,12 @@ export const ToolExecutionTrajectory: React.FC<ToolExecutionTrajectoryProps> = (
 
   // Prepend heading if we have text to copy
   if (shouldRenderButton && rawTextToCopy !== null) {
-      finalFormattedTextToCopy = `# ${displayName}\n\n${rawTextToCopy}`;
-      if(['web_search_tavily', 'run_shell_command'].indexOf(toolName) >= 0){
-        // Copy the command or string query unformatted
-        finalFormattedTextToCopy = rawTextToCopy;
+      const heading = `# ${displayName}\n\n`;
+      // For specific tools, just copy the raw content without the heading
+      if(['web_search_tavily', 'run_shell_command', 'ask_expert'].includes(toolName)) {
+          finalFormattedTextToCopy = rawTextToCopy;
+      } else {
+          finalFormattedTextToCopy = heading + rawTextToCopy;
       }
   }
 
@@ -129,7 +147,8 @@ export const ToolExecutionTrajectory: React.FC<ToolExecutionTrajectoryProps> = (
 
       <CollapsibleContent>
         <CardContent className="py-3 px-4 border-t border-border bg-card/50">
-          {Object.keys(toolParameters).length > 0 && (
+          {/* --- Parameters (excluding ask_expert) --- */}
+          {Object.keys(toolParameters).length > 0 && toolName !== 'ask_expert' && (
             <div className="mb-4">
               <h4 className="text-sm font-semibold mb-2">Parameters:</h4>
               <pre className="text-xs bg-muted p-2 rounded-md overflow-auto max-h-60">
@@ -142,8 +161,9 @@ export const ToolExecutionTrajectory: React.FC<ToolExecutionTrajectoryProps> = (
             </div>
           )}
 
-          {(!isError && hasResultData) && ( // Only show result section if not error and data exists
-            <div>
+          {/* Display Result for non-shell, non-expert tools */}
+          {(!isError && hasResultData && toolName !== 'run_shell_command' && toolName !== 'ask_expert') && (
+            <div className="mb-4">
               <h4 className="text-sm font-semibold mb-2">Result:</h4>
               <pre className="text-xs bg-muted p-2 rounded-md overflow-auto max-h-60">
                 {formatValue(toolResult)}
@@ -151,12 +171,51 @@ export const ToolExecutionTrajectory: React.FC<ToolExecutionTrajectoryProps> = (
             </div>
           )}
 
+          {/* Display Shell Command Output */}
+          {(!isError && toolName === 'run_shell_command' && typeof toolResult?.output === 'string' && toolResult.output.length > 0) && (
+            <div className="mb-4">
+                <h4 className="text-sm font-semibold mb-2">Output:</h4>
+                <pre className="text-xs bg-muted p-2 rounded-md overflow-auto max-h-96">
+                    {toolResult.output}
+                </pre>
+            </div>
+          )}
+
+          {/* --- START ASK_EXPERT SPECIFIC BLOCK --- */}
+          {toolName === 'ask_expert' && (
+            <div className="prose prose-sm dark:prose-invert max-w-none">
+              {/* Render Response */}
+              {typeof stepData?.response_content === 'string' ?
+                stepData.response_content.length > 0 && (
+                <>
+                  <h4 className="text-sm font-semibold mb-2">Expert Response:</h4> {/* Ensure heading styling aligns */}                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    components={{ code: MarkdownCodeBlock }}
+                  >
+                    {stepData.response_content}
+                  </ReactMarkdown>
+                </>
+                ) : (
+                <>
+                  <h4 className="text-sm font-semibold mb-2 !mt-0">Parameters:</h4> {/* Ensure heading styling aligns */}                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    components={{ code: MarkdownCodeBlock }}
+                  >
+                    {toolParameters.question}
+                  </ReactMarkdown>
+                </>
+              )}
+            </div>
+          )}
+          {/* --- END ASK_EXPERT SPECIFIC BLOCK --- */}
+
           {isError && (
-            <div>
+            <div className="mt-4 pt-4 border-t border-border/50">
               <h4 className="text-sm font-semibold mb-2 text-red-500">Error:</h4>
               <pre className="text-xs bg-red-50 dark:bg-red-900/20 p-2 rounded-md text-red-800 dark:text-red-200 overflow-auto max-h-60">
                 {trajectory.errorMessage || 'Unknown error'}
                 {trajectory.errorType && ` (${trajectory.errorType})`}
+                {trajectory.errorDetails && `\nDetails: ${trajectory.errorDetails}`}
               </pre>
             </div>
           )}
