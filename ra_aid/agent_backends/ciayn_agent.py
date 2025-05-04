@@ -949,6 +949,10 @@ class CiaynAgent:
                 self.chat_history.append(HumanMessage(content=base_prompt))
             full_history = self._trim_chat_history(initial_messages, self.chat_history)
 
+            if should_exit(self.session_id):
+                logger.debug("Agent should exit flag detected before model invocation")
+                break
+
             response = self.model.invoke(
                 [self.sys_message] + full_history, self.stream_config
             )
@@ -1087,6 +1091,10 @@ class CiaynAgent:
 
             # Reset empty response counter on successful response
             empty_response_count = 0
+
+            if should_exit(self.session_id):
+                logger.debug("Agent should exit flag detected after model invocation before tool execution")
+                break
 
             try:
                 last_result = self._execute_tool(response)
