@@ -57,6 +57,7 @@ from ra_aid.logging_config import get_logger
 from ra_aid.models_params import (
     DEFAULT_TOKEN_LIMIT,
 )
+from ra_aid.server.agent_thread_manager import agent_thread_registry, has_received_stop_signal
 from ra_aid.tools.handle_user_defined_test_cmd_execution import execute_test_command
 from ra_aid.database.repositories.human_input_repository import (
     get_human_input_repository,
@@ -524,15 +525,25 @@ def _run_agent_stream(agent: RAgents, msg_list: list[BaseMessage]):
 
         logger.debug("Stream iteration ended; checking agent state for continuation.")
 
-        state = _get_agent_state(agent, stream_config)
-
-        if state.next:
-            logger.debug(f"Continuing execution with state.next: {state.next}")
-            agent.invoke(None, stream_config)
-            continue
+        # If the agent is CiaynAgent we handle differently
+        if isinstance(agent, CiaynAgent):
+            logger.debug("Agent is CiaynAgent; checking for completion.")
+            if has_received_stop_signal(agent.session_id):
+                logger.debug("Agent received halt signal; stopping not due to error.")
+                break
+            else:
+                logger.debug("Agent not completed; continuing stream.")
+                continue
         else:
-            logger.debug("No continuation indicated in state; exiting stream loop.")
-            break
+            state = _get_agent_state(agent, stream_config)
+
+            if state.next:
+                logger.debug(f"Continuing execution with state.next: {state.next}")
+                agent.invoke(None, stream_config)
+                continue
+            else:
+                logger.debug("No continuation indicated in state; exiting stream loop.")
+                break
 
     return True
 
