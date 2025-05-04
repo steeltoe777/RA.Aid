@@ -23,7 +23,7 @@ from ra_aid.env_inv_context import EnvInvManager
 from ra_aid.env_inv import EnvDiscovery
 from ra_aid.llm import initialize_llm, get_model_default_temperature
 from ra_aid.server.broadcast_sender import send_broadcast
-from ra_aid.server.agent_thread_manager import agent_thread_registry
+from ra_aid.server.agent_thread_manager import agent_thread_registry, has_received_stop_signal
 
 # Create logger
 logger = logging.getLogger(__name__)
@@ -269,6 +269,11 @@ def run_agent_thread(
     finally:
         # ---> Update status to final state and broadcast <--- START
         if session_repo_instance:
+
+            # Check if we stop due to halt; if so set final_status to 'halted' if not already 'error'
+            if final_status != 'error' and has_received_stop_signal(session_id):
+                final_status = 'halted'
+
             # Log before final update
             logger.debug(f"Updating session {session_id} final status to '{final_status}'")
             try:
