@@ -297,6 +297,7 @@ async def get_session_trajectories(
 )
 async def delete_session(
     session_id: int,
+    session_repo: SessionRepository = Depends(get_repository),
 ) -> None:
     """
     Kill a session by ID.
@@ -309,9 +310,17 @@ async def delete_session(
         HTTPException: With a 404 status code if the session is not found
         HTTPException: With a 500 status code if there's a database error
     """
-    if not is_agent_running(session_id):
+    session = session_repo.get(session_id)
+
+    if not session:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Session with ID {session_id} not found",
+        )
+
+    if not is_agent_running(session_id):
+        raise HTTPException(
+            status_code=status.HTTP_418_IM_A_TEAPOT,
             detail=f"No running agent thread found for session {session_id}"
         )
 
@@ -322,3 +331,5 @@ async def delete_session(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to stop agent for session {session_id}"
         )
+
+    session_repo.update_session_status(session_id, 'halting')
