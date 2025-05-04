@@ -15,7 +15,7 @@ from pydantic import BaseModel, Field
 from ra_aid.database.repositories.session_repository import SessionRepository, get_session_repository
 from ra_aid.database.repositories.trajectory_repository import TrajectoryRepository, get_trajectory_repository
 from ra_aid.database.pydantic_models import SessionModel, TrajectoryModel
-from ra_aid.server.agent_thread_manager import stop_agent, is_agent_running
+from ra_aid.utils.agent_thread_manager import stop_agent, is_agent_running
 
 # Create API router
 router = APIRouter(

@@ -57,7 +57,7 @@ from ra_aid.logging_config import get_logger
 from ra_aid.models_params import (
     DEFAULT_TOKEN_LIMIT,
 )
-from ra_aid.server.agent_thread_manager import agent_thread_registry, has_received_stop_signal
+from ra_aid.utils.agent_thread_manager import agent_thread_registry, has_received_stop_signal
 from ra_aid.tools.handle_user_defined_test_cmd_execution import execute_test_command
 from ra_aid.database.repositories.human_input_repository import (
     get_human_input_repository,

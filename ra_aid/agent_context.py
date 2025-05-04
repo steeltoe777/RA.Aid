@@ -5,8 +5,8 @@ import contextvars
 from contextlib import contextmanager
 from typing import Optional
 
-from ra_aid.server import agent_thread_manager
-from ra_aid.server.agent_thread_manager import agent_thread_registry
+from ra_aid.utils import agent_thread_manager
+from ra_aid.utils.agent_thread_manager import agent_thread_registry
 
 # Create contextvar to hold the agent context
 agent_context_var = contextvars.ContextVar("agent_context", default=None)

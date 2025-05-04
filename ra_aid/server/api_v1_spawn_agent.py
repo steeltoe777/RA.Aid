@@ -23,7 +23,7 @@ from ra_aid.env_inv_context import EnvInvManager
 from ra_aid.env_inv import EnvDiscovery
 from ra_aid.llm import initialize_llm, get_model_default_temperature
 from ra_aid.server.broadcast_sender import send_broadcast
-from ra_aid.server.agent_thread_manager import agent_thread_registry, has_received_stop_signal
+from ra_aid.utils.agent_thread_manager import agent_thread_registry, has_received_stop_signal
 
 # Create logger
 logger = logging.getLogger(__name__)
