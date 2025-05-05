@@ -56,6 +56,7 @@ from ra_aid.prompts.custom_tools_prompts import DEFAULT_CUSTOM_TOOLS_PROMPT
 from ra_aid.prompts.common_prompts import NEW_PROJECT_HINTS
 from ra_aid.tool_configs import get_research_tools, get_web_research_tools
 from ra_aid.tools.memory import get_related_files, log_work_event
+from ra_aid.utils.agent_thread_manager import get_session_id_by_thread_name, get_session_id_by_thread_name
 
 logger = get_logger(__name__)
 console = Console()
@@ -436,7 +437,7 @@ YOU MUST FOLLOW THE EXPERT'S GUIDANCE OR ELSE BE TERMINATED!
             logger.debug(f"[{thread_id}] Invoking research agent...")
             none_or_fallback_handler = agent_utils.init_fallback_handler(agent, tools)
             _result = agent_utils.run_agent_with_retry(
-                agent, prompt, none_or_fallback_handler
+                agent, prompt, none_or_fallback_handler, get_session_id_by_thread_name(thread_id)
             )
             if _result:
                 # Log research completion
@@ -569,7 +570,7 @@ def run_web_research_agent(
         logger.debug(f"[{thread_id}] Invoking web research agent.")
         none_or_fallback_handler = agent_utils.init_fallback_handler(agent, tools)
         _result = agent_utils.run_agent_with_retry(
-            agent, prompt, none_or_fallback_handler
+            agent, prompt, none_or_fallback_handler, session_id=get_session_id_by_thread_name(thread_id)
         )
         if _result:
             # Log web research completion

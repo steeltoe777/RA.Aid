@@ -495,7 +495,7 @@ def _get_agent_state(agent: RAgents, state_config: Dict[str, Any]):
         raise
 
 
-def _run_agent_stream(agent: RAgents, msg_list: list[BaseMessage]):
+def _run_agent_stream(agent: RAgents, msg_list: list[BaseMessage], session_id: Optional[int] = None) -> bool:
     """
     Streams agent output while handling completion and interruption.
 
@@ -519,7 +519,7 @@ def _run_agent_stream(agent: RAgents, msg_list: list[BaseMessage]):
             agent_type = get_agent_type(agent)
             print_agent_output(chunk, agent_type)
 
-            if is_completed() or should_exit():
+            if is_completed() or should_exit(session_id):
                 reset_completion_flags()
                 return True
 
@@ -552,6 +552,7 @@ def run_agent_with_retry(
     agent: RAgents,
     prompt: str,
     fallback_handler: Optional[FallbackHandler] = None,
+    session_id: Optional[int] = None,
 ) -> Optional[str]:
     """Run an agent with retry logic for API errors."""
     logger.debug("Running agent with prompt length: %d", len(prompt))
@@ -598,8 +599,13 @@ def run_agent_with_retry(
                     logger.error("Agent has crashed: %s", crash_message)
                     return f"Agent has crashed: {crash_message}"
 
+                # Check if the agent has received a stop signal
+                if has_received_stop_signal(session_id):
+                    logger.debug("Agent received halt signal; stopping not due to error.")
+                    break
+
                 try:
-                    _run_agent_stream(agent, msg_list)
+                    _run_agent_stream(agent, msg_list, session_id)
                     if fallback_handler and hasattr(
                         fallback_handler, "reset_fallback_handler"
                     ):
@@ -611,6 +617,11 @@ def run_agent_with_retry(
                     )
                     if should_break:
                         break
+
+                    if should_exit(session_id):
+                        logger.info("Agent run exited due to user request.")
+                        break
+
                     if prompt != original_prompt:
                         continue
 
