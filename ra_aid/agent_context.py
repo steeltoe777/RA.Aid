@@ -5,6 +5,9 @@ import contextvars
 from contextlib import contextmanager
 from typing import Optional
 
+from ra_aid.utils import agent_thread_manager
+from ra_aid.utils.agent_thread_manager import agent_thread_registry
+
 # Create contextvar to hold the agent context
 agent_context_var = contextvars.ContextVar("agent_context", default=None)
 
@@ -219,12 +222,15 @@ def get_completion_message() -> str:
     return context.completion_message if context else ""
 
 
-def should_exit() -> bool:
+def should_exit(session_id: Optional[int] = None) -> bool:
     """Check if the agent should exit execution.
 
     Returns:
         True if the agent should exit, False otherwise
     """
+    if session_id is not None and agent_thread_manager.has_received_stop_signal(session_id):
+        return True
+
     context = get_current_context()
     return context.agent_should_exit if context else False
 

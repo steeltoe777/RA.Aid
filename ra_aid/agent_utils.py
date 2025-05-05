@@ -57,6 +57,7 @@ from ra_aid.logging_config import get_logger
 from ra_aid.models_params import (
     DEFAULT_TOKEN_LIMIT,
 )
+from ra_aid.utils.agent_thread_manager import agent_thread_registry, has_received_stop_signal
 from ra_aid.tools.handle_user_defined_test_cmd_execution import execute_test_command
 from ra_aid.database.repositories.human_input_repository import (
     get_human_input_repository,
@@ -127,6 +128,7 @@ def create_agent(
     *,
     checkpointer: Any = None,
     agent_type: str = "default",
+    session_id: Optional[int] = None,
 ):
     """Create a react agent with the given configuration.
 
@@ -135,6 +137,7 @@ def create_agent(
         tools: List of tools to provide to the agent
         checkpointer: Optional memory checkpointer
         agent_type: Type of agent to create (default: "default")
+        session_id: Optional session ID for the agent
 
     Returns:
         The created agent instance
@@ -186,7 +189,7 @@ def create_agent(
         else:
             cpm("Using CIAYN Agent")
             logger.debug("Using CiaynAgent agent instance based on model capabilities.")
-            return CiaynAgent(model, tools, max_tokens=max_input_tokens, config=config)
+            return CiaynAgent(model, tools, max_tokens=max_input_tokens, config=config, session_id=session_id)
 
     except Exception as e:
         # Default to REACT agent if provider/model detection fails
@@ -522,15 +525,25 @@ def _run_agent_stream(agent: RAgents, msg_list: list[BaseMessage]):
 
         logger.debug("Stream iteration ended; checking agent state for continuation.")
 
-        state = _get_agent_state(agent, stream_config)
-
-        if state.next:
-            logger.debug(f"Continuing execution with state.next: {state.next}")
-            agent.invoke(None, stream_config)
-            continue
+        # If the agent is CiaynAgent we handle differently
+        if isinstance(agent, CiaynAgent):
+            logger.debug("Agent is CiaynAgent; checking for completion.")
+            if has_received_stop_signal(agent.session_id):
+                logger.debug("Agent received halt signal; stopping not due to error.")
+                break
+            else:
+                logger.debug("Agent not completed; continuing stream.")
+                continue
         else:
-            logger.debug("No continuation indicated in state; exiting stream loop.")
-            break
+            state = _get_agent_state(agent, stream_config)
+
+            if state.next:
+                logger.debug(f"Continuing execution with state.next: {state.next}")
+                agent.invoke(None, stream_config)
+                continue
+            else:
+                logger.debug("No continuation indicated in state; exiting stream loop.")
+                break
 
     return True
 

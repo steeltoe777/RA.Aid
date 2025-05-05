@@ -72,6 +72,7 @@ def run_research_agent(
     memory: Optional[Any] = None,
     thread_id: Optional[str] = None,
     console_message: Optional[str] = None,
+    session_id: Optional[int] = None,
 ) -> Optional[str]:
     """Run a research agent with the given configuration.
 
@@ -85,6 +86,7 @@ def run_research_agent(
         memory: Optional memory instance to use
         thread_id: Optional thread ID (defaults to new UUID)
         console_message: Optional message to display before running
+        session_id: Optional session ID for tracking
 
     Returns:
         Optional[str]: The completion message if task completed successfully
@@ -346,7 +348,7 @@ def run_research_agent(
 
     logger.debug(f"[{thread_id}] Creating research agent with model: {model}")
     agent = agent_utils.create_agent(
-        model, tools, checkpointer=memory, agent_type="research"
+        model, tools, checkpointer=memory, agent_type="research", session_id=session_id
     )
 
     if agent:
