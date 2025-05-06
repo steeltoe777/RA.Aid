@@ -133,11 +133,6 @@ def test_main_with_wipe_project_memory_flag():
     import sys # Need sys for the mock side effect
     from ra_aid.__main__ import main
 
-    # Create a mock args object with wipe_project_memory=True and project_state_dir=None
-    mock_args = MagicMock()
-    mock_args.wipe_project_memory = True
-    mock_args.project_state_dir = None
-
     # Create a minimal mock args object using argparse.Namespace
     mock_args = argparse.Namespace(
         wipe_project_memory=True,
