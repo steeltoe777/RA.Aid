@@ -1,3 +1,27 @@
+## [0.30.0] - 2025-05-06
+
+### Added
+- **Agent Thread Management:** Introduced a new system (`ra_aid/utils/agent_thread_manager.py`) for managing the lifecycle of agent threads, allowing for better control and monitoring of running agents. Includes functions to register, unregister, stop, and check the status of agent threads.
+- **Session Deletion API:** Added a `DELETE /v1/session/{session_id}` endpoint to allow for stopping an active agent session and marking it as "halting" (`ra_aid/server/api_v1_sessions.py`).
+- **Session ID in Agent Creation:** The `create_agent` function and its callers now utilize a `session_id` for improved agent tracking and context management (`ra_aid/agent_utils.py`, `ra_aid/agents/research_agent.py`, `ra_aid/server/api_v1_spawn_agent.py`).
+- **User Query Trajectory in UI:** Added a new `UserQueryTrajectory.tsx` component to display the initial user query in the frontend timeline.
+- **Copy to Clipboard Button in UI:** Implemented a `CopyToClipboardButton.tsx` component and integrated it into various UI parts (e.g., `MarkdownCodeBlock.tsx`, Task and Expert Response trajectories) for easy content copying.
+- **Persistent CLI Configuration:** Users can now set and persist default LLM provider and model via CLI (`--set-default-provider`, `--set-default-model`), stored in `config.json` in the `.ra-aid` directory (`ra_aid/config.py`).
+- **Tests for Agent Thread Manager:** Added new unit tests for the agent thread management module (`tests/ra_aid/utils/test_agent_thread_manager.py`).
+- **Tests for Session Deletion API:** Added new tests for the session deletion API endpoint (`tests/ra_aid/server/test_api_v1_sessions.py`).
+
+### Changed
+- **Default Gemini Model:** Updated the default Google Gemini model to `gemini-2.5-pro-preview-05-06` (from `gemini-2.5-pro-preview-03-25`) in `ra_aid/__main__.py`, `ra_aid/models_params.py`, `docs/docs/quickstart/recommended.md`, and related tests.
+- **Async Tool Wrapper Optimization:** Refined the creation of synchronous wrappers for asynchronous tools to only pass necessary (non-default or required) arguments to the underlying coroutine, improving efficiency (`ra_aid/tool_configs.py`).
+- **Agent Creation Tests:** Updated tests for `create_agent` to reflect the new `session_id` parameter (`tests/ra_aid/test_agent_utils.py`).
+- **Session Statuses:** The `Session` model now includes 'halting' and 'halted' statuses to support the new session termination API.
+- **User Query Storage:** The initial `user_query` is now stored with session and trajectory data.
+- **`DEFAULT_SHOW_COST`:** Changed to `True` by default.
+
+### Fixed
+- **Tool Name Sanitization:** Corrected an issue where tool names with special characters (`.` or `-`) could cause errors during the creation of synchronous wrappers for async tools. These characters are now consistently replaced with `_` (`ra_aid/tool_configs.py`).
+- **Token Limiter Model Name Handling:** Improved `get_model_token_limit` in `ra_aid/anthropic_token_limiter.py` to better handle model name variations for token limit lookups.
+
 ## [0.29.0] 2025-04-24
 
 ### Changed
@@ -138,7 +162,6 @@
 ### Internal
 - Added database migration for the new session `status` field (`ra_aid/migrations/015_20250408_140800_add_session_status.py`).
 - Updated `.gitignore`.
-
 
 # Changelog
 

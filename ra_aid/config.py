@@ -95,13 +95,13 @@ DEFAULT_EXPERT_MODEL = _default_values.get("expert_model", "claude-3-7-sonnet-20
 
 DEFAULT_ANTHROPIC_MODEL = "claude-3-7-sonnet-20250219"
 DEFAULT_OPENAI_MODEL = "o4-mini"
-DEFAULT_GEMINI_MODEL = "gemini-2.5-pro-preview-03-25"
+DEFAULT_GEMINI_MODEL = "gemini-2.5-pro-preview-05-06"
 DEFAULT_DEEPSEEK_MODEL = "deepseek-reasoner"
 
 
 DEFAULT_EXPERT_ANTHROPIC_MODEL = "claude-3-7-sonnet-20250219"
 DEFAULT_EXPERT_OPENAI_MODEL = "o4-mini"
-DEFAULT_EXPERT_GEMINI_MODEL = "gemini-2.5-pro-preview-03-25"
+DEFAULT_EXPERT_GEMINI_MODEL = "gemini-2.5-pro-preview-05-06"
 DEFAULT_EXPERT_DEEPSEEK_MODEL = "deepseek-reasoner"
 DEFAULT_SHOW_COST = True
 
