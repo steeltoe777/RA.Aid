@@ -536,6 +536,14 @@ models_params = {
             "latency_coefficient": DEFAULT_BASE_LATENCY,
             "default_backend": AgentBackendType.CIAYN,
         },
+        "gemini-2.5-pro-preview-05-06": {
+            "token_limit": 1048576,
+            "max_tokens": 1048576,
+            "supports_temperature": True,
+            "default_temperature": 1.0,
+            "latency_coefficient": DEFAULT_BASE_LATENCY,
+            "default_backend": AgentBackendType.CREATE_REACT_AGENT,
+        },
     },
     "ollama": {
         "command-r": {
