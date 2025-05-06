@@ -324,6 +324,14 @@ models_params = {
             "latency_coefficient": DEFAULT_BASE_LATENCY,
             "default_backend": AgentBackendType.CIAYN, # Match gemini provider entry
         },
+        "google/gemini-2.5-pro-preview-05-06": {
+            "token_limit": 1048576,
+            "max_tokens": 1048576, # Match token_limit as per gemini provider entry
+            "supports_temperature": True,
+            "default_temperature": 1.0, # Match gemini provider entry
+            "latency_coefficient": DEFAULT_BASE_LATENCY,
+            "default_backend": AgentBackendType.CIAYN, # Match gemini provider entry
+        },
     },
     "openai-compatible": {
         "qwen-qwq-32b": {

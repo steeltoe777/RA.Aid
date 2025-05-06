@@ -95,7 +95,7 @@ DEFAULT_EXPERT_MODEL = _default_values.get("expert_model", "claude-3-7-sonnet-20
 
 DEFAULT_ANTHROPIC_MODEL = "claude-3-7-sonnet-20250219"
 DEFAULT_OPENAI_MODEL = "o4-mini"
-DEFAULT_GEMINI_MODEL = "gemini-2.0-flash"
+DEFAULT_GEMINI_MODEL = "gemini-2.5-pro-preview-03-25"
 DEFAULT_DEEPSEEK_MODEL = "deepseek-reasoner"
 
 
