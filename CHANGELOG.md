@@ -1,3 +1,7 @@
+## [0.30.1] - 2025-05-06
+
+- Switch to CIAYN backend for `gemini-2.5-pro-preview-05-06`
+
 ## [0.30.0] - 2025-05-06
 
 ### Added
