@@ -958,6 +958,14 @@ class CiaynAgent:
             )
             # print(f"response={response}")
 
+            if isinstance(response.content, list):
+                if len(response.content) > 1:
+                    response.content = response.content[1]
+                elif len(response.content) == 1:  # If list has only one item
+                    response.content = response.content[0]
+                else:  # If list is empty
+                    response.content = ""  # Set to empty string or handle as an error
+
             # Get settings from config and models_params
             provider = self.config.get("provider", "")
             model_name = self.config.get("model", "")
